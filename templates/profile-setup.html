@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="icon" href="/hushh-ico.png">
+    <title>Hushh - Profile Setup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            height: 100vh;
+            height: 100dvh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            overflow-x: hidden;
+            position: fixed;
+            width: 100%;
+        }
+        
+        .setup-container {
+            height: 100vh;
+            height: 100dvh;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setup-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 20px;
+            position: relative; /* Added to position the close button relative to the header area */
+        }
+        
+        /* NEW: Close Button Styles */
+        .close-btn {
+            position: absolute;
+            top: 20px; 
+            right: 0px; 
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .setup-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            border-radius: 16px;
+        }
+
+        .setup-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #ff4757;
+        }
+        
+        .setup-subtitle {
+            font-size: 14px;
+            color: #a0a0a0;
+            line-height: 1.5;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #2d2d2d;
+            background: #1a1a1a;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            border-color: #ff4757;
+            background: #1e1e1e;
+        }
+
+        .form-group input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .radio-option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+
+        .radio-label {
+            display: block;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #2d2d2d;
+            background: #1a1a1a;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .radio-option input[type="radio"]:checked + .radio-label {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            border-color: #ff6b6b;
+            color: white;
+        }
+
+        .interests-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 44px;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #2d2d2d;
+            background: #1a1a1a;
+            margin-top: 8px;
+        }
+
+        .interest-tag {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .interest-tag .remove-btn {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .interest-input-wrapper {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .interest-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #2d2d2d;
+            background: #1e1e1e;
+            color: white;
+            font-size: 14px;
+        }
+
+        .interest-hint {
+            font-size: 12px;
+            color: #a0a0a0;
+            margin-top: 5px;
+        }
+
+        .location-info {
+            background: #1e1e1e;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #a0a0a0;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .save-btn:active {
+            transform: scale(0.98);
+        }
+
+        .save-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            color: #ff4757;
+            margin-top: 10px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: #2d2d2d;
+            margin: 25px 0;
+        }
+        
+        /* Verification Section Styles */
+        .verification-container {
+            border: 1px solid #ff6b6b;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            background: #1a1a1a;
+        }
+
+        .verification-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .verification-hint {
+            font-size: 13px;
+            color: #a0a0a0;
+            margin-bottom: 15px;
+        }
+
+        .camera-viewport {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #0f0f0f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #cameraVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); 
+            display: none;
+        }
+
+        #captureCanvas {
+            display: none; 
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .capture-btn {
+            background: #34A853; 
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            margin-right: 10px;
+        }
+        
+        .capture-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .verified-status {
+            font-size: 15px;
+            font-weight: 600;
+            color: #51cf66;
+            text-align: center;
+        }
+        
+        /* Status Popup Styles */
+        #statusPopup {
+            position: fixed;
+            bottom: 100px; 
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(81, 207, 102, 0.95); 
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (min-width: 768px) {
+            body::before {
+                content: "📱 Please open on mobile device";
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 18px;
+                text-align: center;
+                z-index: 99999;
+            }
+            
+            .setup-container {
+                display: none !important;
+            }
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="/firebase-auth.js"></script>
+</head>
+<body>
+
+    <div class="setup-container">
+        <div class="setup-header">
+            <button class="close-btn" onclick="window.location.href='/'">✕</button>
+            
+            <img src="/hushh-ico.png" alt="Hushh" class="setup-logo">
+            <h2 class="setup-title">Complete Your Profile</h2>
+            <p class="setup-subtitle">Help us find your perfect 90-second date match</p>
+        </div>
+        
+        <form id="profile-form">
+
+            <div class="verification-container">
+                <div class="verification-header" id="verificationHeader">
+                    📸 Photo Verification
+                </div>
+                <p class="verification-hint">Get a "Verified" badge to boost trust and matches. Capture a clear, recent photo now (no uploading allowed).</p>
+
+                <div class="camera-viewport">
+                    <video id="cameraVideo" autoplay playsinline></video>
+                    <canvas id="captureCanvas"></canvas>
+                    <span id="cameraMessage" style="color: #a0a0a0;">Tap 'Start Camera' below</span>
+                </div>
+
+                <button type="button" class="capture-btn" id="startCaptureBtn">
+                    Start Camera
+                </button>
+                <button type="button" class="capture-btn" id="takePhotoBtn" style="display: none;">
+                    Retake Photo
+                </button>
+                <div class="verified-status" id="verifiedStatus" style="display: none;">
+                    ✅ Profile Verified!
+                </div>
+            </div>
+            
+            <div class="section-divider"></div>
+            
+            <div class="form-group">
+                <label for="name-input">Full Name</label>
+                <input type="text" id="name-input" required disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="age-input">Age (Must be 18+)</label>
+                <input type="number" id="age-input" min="18" max="120" placeholder="e.g., 25" required>
+            </div>
+
+            <div class="form-group">
+                <label for="gender-select">Your Gender</label>
+                <select id="gender-select" required>
+                    <option value="" disabled selected>Select your gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="form-group">
+                <label>Who do you want to date?</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="straight" name="dating-pref" value="straight" required>
+                        <label for="straight" class="radio-label">💑 Straight</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="gay" name="dating-pref" value="gay">
+                        <label for="gay" class="radio-label">👬 Gay</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="lesbian" name="dating-pref" value="lesbian">
+                        <label for="lesbian" class="radio-label">👭 Lesbian</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="bisexual" name="dating-pref" value="bisexual">
+                        <label for="bisexual" class="radio-label">💖 Bisexual</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="form-group">
+                <label>Date Preference</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="global" name="date-scope" value="global" required checked>
+                        <label for="global" class="radio-label">🌍 Global Dating</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="local" name="date-scope" value="local">
+                        <label for="local" class="radio-label">📍 Local Dating</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="regionGroup" style="display: none;">
+                <label for="region-input">Your Region/State</label>
+                <input type="text" id="region-input" placeholder="e.g., Karnataka, California">
+                <div class="location-info" id="locationInfo" style="display: none;">
+                    <span>📍</span>
+                    <span id="detectedLocation">Detecting your location...</span>
+                </div>
+            </div>
+
+            <div class="section-divider"></div>
+            
+            <div class="form-group">
+                <label>Your Interests (Max 5)</label>
+                <div class="interests-container" id="interestsContainer">
+                    <span style="color: #a0a0a0; font-size: 13px;">No interests added yet</span>
+                </div>
+                <div class="interest-input-wrapper">
+                    <input type="text" class="interest-input" id="interests-input" placeholder="Type interest and press Enter or Space">
+                    <p class="interest-hint">Examples: gaming, travel, music, coding, cooking</p>
+                </div>
+            </div>
+            
+            <p class="error-message" id="error-message"></p>
+            
+            <button type="submit" class="save-btn" id="save-profile-btn">
+                Save & Start Dating 🚀
+            </button>
+        </form>
+    </div>
+
+    <div id="statusPopup"></div>
+
+    <script>
+        let interests = [];
+        const maxInterests = 5;
+
+        function renderInterests() {
+            if (interests.length === 0) {
+                interestsContainer.innerHTML = '<span style="color: #a0a0a0; font-size: 13px;">No interests added yet</span>';
+            } else {
+                interestsContainer.innerHTML = interests.map((interest, index) => `
+                    <div class="interest-tag">
+                        ${interest}
+                        <span class="remove-btn" onclick="removeInterest(${index})">×</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addInterest(interest) {
+            const trimmed = interest.trim().toLowerCase();
+            if (trimmed && interests.length < maxInterests && !interests.includes(trimmed)) {
+                interests.push(trimmed);
+                renderInterests();
+                interestsInput.value = '';
+            } else if (interests.length >= maxInterests) {
+                alert(`Maximum ${maxInterests} interests allowed`);
+            }
+        }
+
+        window.removeInterest = function(index) {
+            interests.splice(index, 1);
+            renderInterests();
+        };
+
+        const interestsInput = document.getElementById('interests-input');
+        const interestsContainer = document.getElementById('interestsContainer');
+
+        interestsInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const value = interestsInput.value.trim();
+                if (value) {
+                    addInterest(value);
+                }
+            }
+        });
+
+        const localRadio = document.getElementById('local');
+        const regionGroup = document.getElementById('regionGroup');
+        const regionInput = document.getElementById('region-input');
+        const locationInfo = document.getElementById('locationInfo');
+        const detectedLocation = document.getElementById('detectedLocation');
+
+        document.querySelectorAll('input[name="date-scope"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'local') {
+                    regionGroup.style.display = 'block';
+                    detectLocation();
+                } else {
+                    regionGroup.style.display = 'none';
+                    regionInput.value = '';
+                }
+            });
+        });
+
+        async function detectLocation() {
+            locationInfo.style.display = 'flex';
+            detectedLocation.textContent = 'Detecting your location...';
+
+            try {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            const { latitude, longitude } = position.coords;
+                            const region = await getRegionFromCoords(latitude, longitude);
+                            regionInput.value = region;
+                            detectedLocation.textContent = `Detected: ${region}`;
+                        },
+                        async () => {
+                            const region = await getRegionFromIP();
+                            regionInput.value = region;
+                            detectedLocation.textContent = `Detected: ${region}`;
+                        }
+                    );
+                } else {
+                    const region = await getRegionFromIP();
+                    regionInput.value = region;
+                    detectedLocation.textContent = `Detected: ${region}`;
+                }
+            } catch (error) {
+                detectedLocation.textContent = 'Could not detect location. Please enter manually.';
+            }
+        }
+
+        async function getRegionFromCoords(lat, lon) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+                const data = await response.json();
+                return data.address.state || data.address.country || 'Unknown';
+            } catch {
+                return await getRegionFromIP();
+            }
+        }
+
+        async function getRegionFromIP() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                return data.region || data.country_name || 'Unknown';
+            } catch {
+                return 'Unknown';
+            }
+        }
+
+        // --- PHOTO VERIFICATION LOGIC ---
+        const cameraVideo = document.getElementById('cameraVideo');
+        const captureCanvas = document.getElementById('captureCanvas');
+        const startCaptureBtn = document.getElementById('startCaptureBtn');
+        const takePhotoBtn = document.getElementById('takePhotoBtn');
+        const cameraMessage = document.getElementById('cameraMessage');
+        const verifiedStatus = document.getElementById('verifiedStatus');
+        const verificationHeader = document.getElementById('verificationHeader');
+        
+        let cameraStream = null;
+        let photoVerificationData = null; // Store captured Data URL
+        let popupTimeout = null; 
+
+        function showPopup(message, duration = 4000) {
+            const statusPopup = document.getElementById('statusPopup');
+            statusPopup.textContent = message;
+            statusPopup.style.opacity = '1';
+            
+            if (popupTimeout) {
+                clearTimeout(popupTimeout);
+            }
+
+            popupTimeout = setTimeout(() => {
+                statusPopup.style.opacity = '0';
+            }, duration);
+        }
+
+        async function startCamera() {
+            cameraMessage.textContent = 'Awaiting permissions...';
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user' },
+                    audio: false
+                });
+                cameraVideo.srcObject = cameraStream;
+                cameraVideo.play();
+                cameraVideo.style.display = 'block';
+                captureCanvas.style.display = 'none';
+                cameraMessage.style.display = 'none';
+                startCaptureBtn.style.display = 'none';
+                takePhotoBtn.style.display = 'block';
+                takePhotoBtn.textContent = 'Take Photo';
+                verificationHeader.textContent = '📸 Strike a Pose!';
+
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                cameraMessage.textContent = 'Camera access denied or device not found.';
+                startCaptureBtn.style.display = 'block';
+                takePhotoBtn.style.display = 'none';
+                verificationHeader.textContent = '🚫 Verification Failed';
+                alert('Camera access is required for photo verification.');
+            }
+        }
+
+        function takePhoto() {
+            if (!cameraStream) return;
+
+            const context = captureCanvas.getContext('2d');
+            
+            captureCanvas.width = cameraVideo.videoWidth;
+            captureCanvas.height = cameraVideo.videoHeight;
+            
+            // Draw the video frame (mirrored)
+            context.save();
+            context.scale(-1, 1);
+            context.drawImage(cameraVideo, captureCanvas.width * -1, 0, captureCanvas.width, captureCanvas.height);
+            context.restore();
+
+            stopCamera();
+
+            // CAPTURE AS BASE64 Data URL
+            const dataURL = captureCanvas.toDataURL('image/jpeg', 0.8);
+            photoVerificationData = dataURL;
+            
+            takePhotoBtn.textContent = 'Retake Photo';
+            takePhotoBtn.style.display = 'block';
+            startCaptureBtn.style.display = 'none';
+            cameraVideo.style.display = 'none';
+            
+            // HIDE cameraMessage after capture
+            cameraMessage.textContent = ''; 
+            cameraMessage.style.display = 'none'; 
+            
+            showPopup('Photo Captured! Click Save to upload.', 4000); 
+
+            // Show captured image preview on canvas
+            captureCanvas.style.display = 'block';
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            cameraVideo.srcObject = null;
+            cameraVideo.style.display = 'none';
+        }
+
+        startCaptureBtn.addEventListener('click', startCamera);
+        
+        takePhotoBtn.addEventListener('click', () => {
+            if (photoVerificationData) {
+                // If photoVerificationData exists, retake means restart camera
+                photoVerificationData = null; 
+                captureCanvas.style.display = 'none';
+                startCamera(); 
+            } else {
+                // If no photo data, take a new photo
+                takePhoto();
+            }
+        });
+
+        // --- SERVER-SIDE UPLOAD FUNCTION ---
+        async function uploadPhotoToServer(uid, dataURL) {
+            const response = await fetch('/upload_verification_photo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    uid: uid, 
+                    image_data: dataURL 
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Server failed to process photo upload.');
+            }
+
+            const data = await response.json();
+            return data.photo_url; 
+        }
+
+
+        // --- Existing Form Submission and Auth Logic (Modified for Display and Upload) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const auth = window.firebaseAuth;
+            const profileForm = document.getElementById('profile-form');
+            const nameInput = document.getElementById('name-input');
+            const saveBtn = document.getElementById('save-profile-btn');
+            const errorMessage = document.getElementById('error-message');
+            
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    nameInput.value = user.displayName || 'Anonymous';
+                    
+                    window.getUserProfile(user.uid).then(profile => {
+                        window.profile = profile;
+                        
+                        if (profile) {
+                            document.getElementById('age-input').value = profile.age || '';
+                            document.getElementById('gender-select').value = profile.gender || '';
+                            
+                            if (profile.datingPreference) {
+                                document.querySelector(`input[name="dating-pref"][value="${profile.datingPreference}"]`).checked = true;
+                            }
+                            
+                            if (profile.dateScope) {
+                                document.querySelector(`input[name="date-scope"][value="${profile.dateScope}"]`).checked = true;
+                                if (profile.dateScope === 'local') {
+                                    regionGroup.style.display = 'block';
+                                    regionInput.value = profile.region || '';
+                                }
+                            }
+                            
+                            if (profile.interests && profile.interests.length > 0) {
+                                interests = profile.interests;
+                                renderInterests();
+                            }
+                            
+                            // NEW: Check verification status and display saved photo
+                            if (profile.photo_verified) {
+                                verifiedStatus.style.display = 'block';
+                                verificationHeader.textContent = '✅ Profile Verified';
+                                startCaptureBtn.style.display = 'none';
+                                takePhotoBtn.style.display = 'block';
+                                takePhotoBtn.textContent = 'Retake Photo';
+                                
+                                // HIDE cameraMessage when displaying saved verified state
+                                cameraMessage.textContent = ''; 
+                                cameraMessage.style.display = 'none'; 
+                                
+                                if (profile.verificationPhotoURL) {
+                                    // Display the previously uploaded image on the canvas
+                                    const context = captureCanvas.getContext('2d');
+                                    const img = new Image();
+                                    
+                                    // Necessary for cross-origin images (e.g., ngrok -> local server)
+                                    img.crossOrigin = "anonymous"; 
+                                    
+                                    img.onload = () => {
+                                        // Use the container's size to ensure the image covers the viewport area
+                                        const viewport = document.querySelector('.camera-viewport');
+                                        const containerWidth = viewport.offsetWidth;
+                                        const containerHeight = viewport.offsetHeight;
+                                        
+                                        // Calculate the maximum possible size while maintaining aspect ratio (Cover effect)
+                                        const ratio = Math.max(containerWidth / img.naturalWidth, containerHeight / img.naturalHeight);
+                                        const newWidth = img.naturalWidth * ratio;
+                                        const newHeight = img.naturalHeight * ratio;
+
+                                        // Set the canvas drawing dimensions to the container size
+                                        captureCanvas.width = containerWidth;
+                                        captureCanvas.height = containerHeight;
+                                        
+                                        // Calculate offset to center the image for a 'cover' effect
+                                        const offsetX = (containerWidth - newWidth) / 2;
+                                        const offsetY = (containerHeight - newHeight) / 2;
+
+                                        // Draw the image scaled and centered
+                                        context.drawImage(img, offsetX, offsetY, newWidth, newHeight); 
+                                        
+                                        // Display the canvas
+                                        captureCanvas.style.display = 'block';
+                                        cameraVideo.style.display = 'none';
+                                    };
+                                    // Use the URL saved by the Flask server
+                                    img.src = profile.verificationPhotoURL; 
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    window.location.href = '/';
+                }
+            });
+
+            profileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                saveBtn.disabled = true;
+                errorMessage.style.display = 'none';
+
+                const age = parseInt(document.getElementById('age-input').value);
+                const gender = document.getElementById('gender-select').value;
+                const datingPreference = document.querySelector('input[name="dating-pref"]:checked')?.value;
+                const dateScope = document.querySelector('input[name="date-scope"]:checked')?.value;
+                const region = dateScope === 'local' ? regionInput.value.trim() : '';
+                const name = nameInput.value;
+
+                if (age < 18 || !gender || !datingPreference || interests.length === 0) {
+                    errorMessage.textContent = 'Please fill all required fields and add at least one interest.';
+                    errorMessage.style.display = 'block';
+                    saveBtn.disabled = false;
+                    return;
+                }
+
+                if (dateScope === 'local' && !region) {
+                    errorMessage.textContent = 'Please enter your region for local dating.';
+                    errorMessage.style.display = 'block';
+                    saveBtn.disabled = false;
+                    return;
+                }
+                
+                stopCamera();
+                
+                let verifiedPhotoURL = (window.profile && window.profile.verificationPhotoURL) || null;
+                let isVerified = (window.profile && window.profile.photo_verified) || false;
+
+                if (photoVerificationData) { 
+                    saveBtn.textContent = 'Uploading Photo...';
+                    try {
+                        verifiedPhotoURL = await uploadPhotoToServer(auth.currentUser.uid, photoVerificationData);
+                        isVerified = true; 
+                        showPopup('Photo uploaded successfully!', 3000);
+                    } catch (uploadError) {
+                        console.error('Verification Photo Upload Error:', uploadError);
+                        errorMessage.textContent = `Failed to upload photo: ${uploadError.message}. Try again.`;
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save & Start Dating 🚀';
+                        return;
+                    }
+                }
+                
+                const profileData = { 
+                    name, 
+                    age, 
+                    gender, 
+                    datingPreference,
+                    dateScope,
+                    region: region || 'global',
+                    interests,
+                    photo_verified: isVerified,
+                    verificationPhotoURL: verifiedPhotoURL
+                };
+                
+                saveBtn.textContent = 'Saving Profile...';
+
+                try {
+                    await window.createOrUpdateUserProfile(auth.currentUser.uid, profileData);
+                    console.log("Profile saved successfully. Redirecting...");
+                    window.location.href = '/';
+                } catch (error) {
+                    console.error('Profile Save Error:', error);
+                    errorMessage.textContent = 'Failed to save profile. Please try again.';
+                    errorMessage.style.display = 'block';
+                    saveBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

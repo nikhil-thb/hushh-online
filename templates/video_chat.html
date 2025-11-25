@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" href="/hushh-ico.png">
+    <title>90-Second Date - Hushh</title>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #2d2d2d;
+            --shadow: rgba(0, 0, 0, 0.5);
+            --accent-primary: #ff6b6b;
+            --accent-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            --success: #51cf66;
+            --overlay: rgba(0, 0, 0, 0.7);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            user-select: none;
+            position: fixed;
+            width: 100%;
+        }
+
+        .video-container {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            position: relative;
+            background: var(--bg-secondary);
+        }
+
+        .call-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--overlay);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 999;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            margin-right: 12px;
+        }
+
+        .header-profile-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+            cursor: pointer;
+            background: var(--bg-card);
+            margin-left: auto;
+        }
+
+        .header-profile-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .call-info {
+            flex: 1;
+        }
+
+        .caller-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            color: var(--text-primary);
+            display: flex; 
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .verified-badge {
+            color: var(--success); 
+            font-size: 14px;
+            font-weight: 700;
+            display: none;
+        }
+
+        .call-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .mobile-video-grid {
+            position: absolute;
+            top: 60px;
+            bottom: 150px;
+            left: 12px;
+            right: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .video-layout {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 16px var(--shadow);
+        }
+
+        /* Watermark */
+        .video-watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+
+        /* Remote user profile picture overlay */
+        .remote-user-avatar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            background: var(--bg-primary);
+            display: none; /* Hidden until match found */
+        }
+
+        .remote-user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remote-user-avatar::before {
+            content: "💖";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+        }
+
+        .remote-user-avatar.has-photo::before {
+            content: none;
+        }
+
+        .remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: var(--bg-secondary);
+            transform: scaleX(-1);
+        }
+
+        .remote-video.back-camera {
+            transform: none;
+        }
+
+        .remote-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            z-index: 2;
+        }
+
+        .remote-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 12px;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 16px var(--shadow);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .remote-avatar.has-photo::before {
+            content: none !important;
+        }
+
+        .remote-avatar::before {
+            content: "💖";
+        }
+
+        .remote-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .connection-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .local-video-container {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .local-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .call-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+            padding: 10px 14px;
+            background: var(--overlay);
+            border-radius: 50px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px var(--shadow);
+            /* REMOVED transition - keep fixed position */
+        }
+
+        .control-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .camera-btn {
+            background: var(--success);
+        }
+
+        .flip-camera-btn {
+            background: linear-gradient(135deg, #339af0, #228be6);
+        }
+
+        .end-call-btn {
+            background: var(--accent-gradient);
+        }
+
+        .skip-btn {
+            background: linear-gradient(135deg, #ffa94d, #ff922b);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .decision-buttons {
+            position: absolute;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 500px;
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            z-index: 1000;
+            padding: 10px 14px;
+            background: var(--overlay);
+            border-radius: 50px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+        
+        .continue-chat-btn, .end-date-btn {
+            color: white;
+            width: 100%;
+            padding: 12px 0;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .continue-chat-btn {
+            background: linear-gradient(135deg, #51cf66, #40c057);
+        }
+        
+        .end-date-btn {
+            background: var(--accent-gradient);
+        }
+        
+        .continue-chat-btn:active,
+        .end-date-btn:active {
+            transform: scale(0.98);
+        }
+
+        #prompt-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            max-width: 500px;
+            background: var(--overlay);
+            padding: 18px;
+            border-radius: 18px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            backdrop-filter: blur(20px);
+            z-index: 998;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px var(--shadow);
+            transition: all 0.5s ease;
+            opacity: 0;
+            display: none;
+        }
+        
+        #prompt-text {
+            color: var(--text-primary);
+            margin-top: 8px;
+            font-size: 1.1rem;
+        }
+
+        .call-timer {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background: var(--overlay);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 999;
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+        
+        .call-timer.decision {
+            background: linear-gradient(135deg, #ffa94d, #ff922b);
+            color: white;
+            border: none;
+        }
+
+        .search-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+
+        .search-title {
+            font-size: 1.5rem;
+            margin: 14px 0;
+            font-weight: 700;
+        }
+
+        .search-screen p {
+            color: var(--text-secondary);
+        }
+
+        .start-call-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            margin-top: 18px;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+        }
+
+        .start-call-btn:active {
+            transform: scale(0.95);
+        }
+
+        .video-container.searching .search-screen {
+            display: flex;
+        }
+
+        /* Profile Modal */
+        .profile-modal {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            background: var(--bg-secondary);
+            border-radius: 20px 20px 0 0;
+            z-index: 10001;
+            transition: bottom 0.3s ease;
+            max-height: 40vh;
+        }
+
+        .profile-modal.show {
+            bottom: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: none;
+        }
+
+        .modal-overlay.show {
+            display: block;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .modal-drag-bar {
+            width: 40px;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin: 0 auto 15px;
+        }
+
+        .modal-profile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-profile-pic {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 3px solid var(--border-color);
+            overflow: hidden;
+            background: var(--bg-card);
+        }
+
+        .modal-profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-name {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .modal-email {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        @media (min-width: 768px) {
+            body::before {
+                content: "📱 Please open on mobile device";
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 18px;
+                text-align: center;
+                z-index: 99999;
+            }
+            
+            .video-container {
+                display: none !important;
+            }
+        }
+    </style>
+    <script src="/firebase-auth.js"></script>
+</head>
+<body>
+    
+    <div id="prompt-display">
+        <div id="timer-display">01:30</div>
+        <div id="prompt-text">Loading question...</div>
+    </div>
+    
+    <div class="decision-buttons" id="decisionButtons">
+        <button class="end-date-btn" id="endDateBtn">❌ End Date</button>
+        <button class="continue-chat-btn" id="continueChatBtn">💖 Continue Chat</button>
+    </div>
+    
+    <div class="video-container" id="videoContainer">
+        <div class="call-header">
+            <button class="back-btn" onclick="window.location.href='/'">←</button>
+            <div class="call-info">
+                <div class="caller-name" id="callerName">hushh 
+                    <span id="verifiedBadge" class="verified-badge">✅ Verified</span>
+                </div>
+                <div class="call-status" id="callStatus">Ready to Date</div>
+            </div>
+            <div class="header-profile-btn" id="headerProfileBtn">
+                <img src="/hushh-ico.png" alt="Profile" id="headerProfilePic">
+            </div>
+        </div>
+        
+        <div class="mobile-video-grid">
+            <div class="video-layout">
+                <video class="remote-video" id="remoteVideo" autoplay playsinline></video>
+                
+                <div class="remote-user-avatar" id="remoteUserAvatar">
+                    <img src="/hushh-ico.png" alt="Match" id="remoteUserAvatarImg">
+                </div>
+                
+                <div class="video-watermark">hushh.online</div>
+                
+                <div class="remote-placeholder" id="remotePlaceholder">
+                    <div class="remote-avatar" id="remoteAvatarMobile"></div>
+                    <div class="remote-name" id="remoteName">Match</div>
+                    <div class="connection-info" id="connectionInfo">Start your 90-second date</div>
+                </div>
+            </div>
+
+            <div class="local-video-container">
+                <video class="local-video" id="localVideo" autoplay muted playsinline></video>
+            </div>
+        </div>
+        
+        <div class="call-timer" id="callTimer">00:00</div>
+        
+        <div class="search-screen" id="searchScreen">
+            <h2 class="search-title">Finding Your Date...</h2>
+            <p>Matching based on your interests</p>
+            <button class="start-call-btn" id="startCallBtn">💖</button>
+        </div>
+
+        <div class="call-controls" id="callControls">
+            <button class="control-btn skip-btn" id="skipBtn" title="Next">→</button>
+            <button class="control-btn end-call-btn" id="endCallBtn" title="End">📞</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="profileModalOverlay"></div>
+    <div class="profile-modal" id="profileModal">
+        <div class="modal-header">
+            <div class="modal-drag-bar"></div>
+            <div class="modal-profile">
+                <div class="modal-profile-pic">
+                    <img src="/hushh-ico.png" alt="Profile" id="modalProfilePic">
+                </div>
+                <div class="modal-name" id="modalName">User Name</div>
+                <div class="modal-email" id="modalEmail">email@example.com</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Profile modal logic
+        document.getElementById('headerProfileBtn')?.addEventListener('click', () => {
+            document.getElementById('profileModal').classList.add('show');
+            document.getElementById('profileModalOverlay').classList.add('show');
+        });
+
+        document.getElementById('profileModalOverlay')?.addEventListener('click', () => {
+            document.getElementById('profileModal').classList.remove('show');
+            document.getElementById('profileModalOverlay').classList.remove('show');
+        });
+
+        // Update profile pics on auth
+        firebaseAuth.onAuthStateChanged(async (user) => {
+            if (user) {
+                const photoURL = user.photoURL || '/hushh-ico.png';
+                document.getElementById('headerProfilePic').src = photoURL;
+                document.getElementById('modalProfilePic').src = photoURL;
+                document.getElementById('modalName').textContent = user.displayName || 'User';
+                document.getElementById('modalEmail').textContent = user.email || '';
+            }
+        });
+    </script>
+    <script src="/video-chat-logic.js"></script>
+</body>
+</html>

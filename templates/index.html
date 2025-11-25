@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta name="description" content="Hushh - 90-second video dating app">
+    <meta name="keywords" content="video dating app, 90-second date, meet singles">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/hushh-ico.png">
+    <meta name="theme-color" content="#ff4757">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    
+    <title>Hushh - 90-Second Video Date</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #2d2d2d;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --accent-primary: #ff6b6b;
+            --accent-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            --success: #51cf66;
+        }
+        
+        html, body {
+            height: 100vh;
+            height: 100dvh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Loading Screen (Ensure it covers everything) */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20000;
+        }
+        
+        .loading-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            animation: bounce 1s infinite alternate;
+        }
+        
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        /* PWA Install Screen */
+        #pwa-install-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .pwa-logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 30px;
+            border-radius: 25px;
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.3);
+        }
+
+        .pwa-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .pwa-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .pwa-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .pwa-btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .pwa-btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .pwa-btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* App Container */
+        .app-container {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        /* App Header */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            height: 60px;
+            flex-shrink: 0;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-btn {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+        }
+
+        .app-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* NEW: Profile button container and badge styles */
+        .profile-btn-wrapper {
+            position: relative;
+        }
+        
+        .profile-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 18px;
+            height: 18px;
+            background: var(--success); /* Green */
+            border-radius: 50%;
+            border: 2px solid var(--bg-secondary); /* Border color to contrast with header */
+            display: none; /* Hide by default */
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .profile-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+            cursor: pointer;
+            background: var(--bg-card);
+        }
+
+        .profile-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Navigation Drawer */
+        .nav-drawer {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: var(--bg-secondary);
+            z-index: 9999;
+            transition: left 0.3s ease;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-drawer.open {
+            left: 0;
+        }
+
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+            display: none;
+        }
+
+        .drawer-overlay.show {
+            display: block;
+        }
+
+        .drawer-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .drawer-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            /* No relative positioning needed here, the picture container itself is relative */
+        }
+
+        .drawer-profile-pic {
+            position: relative; /* CRITICAL: To position the badge correctly */
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+            background: var(--bg-card);
+        }
+        
+        /* UPDATED: Drawer badge styles to position it over the picture */
+        .drawer-profile-pic .profile-badge {
+            position: absolute;
+            bottom: 0px; 
+            right: 0px; 
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            border: 2px solid var(--bg-secondary); /* Border color to contrast with drawer background */
+        }
+
+
+        .drawer-profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .drawer-info h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .drawer-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .drawer-menu {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .drawer-item {
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+        }
+
+        .drawer-item:hover {
+            background: var(--bg-card);
+        }
+
+        .drawer-item span {
+            font-size: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Policy Modal Styles (rest of styles remain the same) */
+        .policy-modal {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            z-index: 20001; 
+            display: none;
+            flex-direction: column;
+        }
+        
+        .policy-modal.show {
+            display: flex;
+        }
+        
+        .policy-header {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .policy-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .policy-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .policy-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-primary);
+        }
+        
+        .policy-content h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: var(--accent-primary);
+        }
+        
+        .policy-content h3 {
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+        
+        .policy-content h4 {
+            font-size: 16px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .policy-content p {
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        
+        .policy-content ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .policy-content li {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        .policy-content strong {
+            color: var(--text-primary);
+        }
+
+        .welcome-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+        }
+
+        .welcome-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .start-date-btn {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .start-date-btn:active {
+            transform: scale(0.98);
+        }
+
+        .user-count {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #51cf66;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Profile Modal */
+        .profile-modal {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            background: var(--bg-secondary);
+            border-radius: 20px 20px 0 0;
+            z-index: 10001;
+            transition: bottom 0.3s ease;
+            max-height: 50vh;
+        }
+
+        .profile-modal.show {
+            bottom: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            display: none;
+        }
+
+        .modal-overlay.show {
+            display: block;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .modal-drag-bar {
+            width: 40px;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            margin: 0 auto 15px;
+        }
+
+        .modal-profile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-profile-pic {
+            position: relative; /* Added for badge positioning */
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--border-color);
+            overflow: hidden;
+            background: var(--bg-card);
+        }
+        
+        /* Modal Badge Position */
+        .modal-profile .profile-badge {
+            bottom: 2px;
+            right: 2px;
+            width: 15px;
+            height: 15px;
+            font-size: 8px;
+        }
+
+        .modal-profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-name {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-email {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Sign In Screen */
+        .signin-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .signin-logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 30px;
+            border-radius: 20px;
+        }
+
+        .signin-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .signin-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .google-signin-btn {
+            background: white;
+            color: #1a1a1a;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 300px;
+            justify-content: center;
+        }
+        
+        /* Consent Modal Styles */
+        #consentModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 15000;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .consent-card {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .consent-card h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        
+        .consent-card p {
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        
+        .policy-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .policy-link-btn {
+            background: var(--bg-card);
+            color: var(--accent-primary);
+            padding: 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .policy-link-btn.viewed {
+            color: #51cf66;
+            border-color: #51cf66;
+        }
+
+        .consent-accept-btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            background: var(--text-secondary);
+            color: var(--bg-primary);
+            box-shadow: none;
+            transition: all 0.3s ease;
+        }
+        
+        .consent-accept-btn:enabled {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+
+        @media (min-width: 768px) {
+            body::before {
+                content: "📱 Please open on mobile device";
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 18px;
+                text-align: center;
+                z-index: 99999;
+                color: var(--text-primary);
+            }
+            
+            .app-container, #pwa-install-screen, .signin-screen, .loading-screen, .modal-overlay, .profile-modal, .policy-modal, #consentModal {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="loading-screen" id="loadingScreen">
+        <img src="/hushh-ico.png" alt="Hushh" class="loading-logo">
+        <p class="loading-text">Loading...</p>
+    </div>
+    
+    <div id="pwa-install-screen" style="display: none;">
+        <img src="/hushh-ico.png" alt="Hushh" class="pwa-logo">
+        <h1 class="pwa-title">Welcome to Hushh</h1>
+        <p class="pwa-subtitle">90-second video dates<br>Stop swiping, start talking</p>
+        <div class="pwa-buttons">
+            <button class="pwa-btn pwa-btn-primary" id="installAppBtn">📱 Install App</button>
+            <button class="pwa-btn pwa-btn-secondary" id="continueWebBtn">🌐 Continue with Web</button>
+        </div>
+    </div>
+    
+    <div id="consentModal" style="display: none;">
+        <div class="consent-card">
+            <img src="/hushh-ico.png" alt="Hushh" class="signin-logo" style="width: 80px; height: 80px; margin-bottom: 20px;">
+            <h2>Your Privacy Matters</h2>
+            <p>Before you continue, please review and accept our legal agreements. You must view both documents to proceed.</p>
+            
+            <div class="policy-links">
+                <button class="policy-link-btn" id="consentTermsBtn" data-policy="terms">
+                    <span>📄 Terms of Use</span>
+                    <span class="check-icon">→</span>
+                </button>
+                <button class="policy-link-btn" id="consentPrivacyBtn" data-policy="privacy">
+                    <span>🔒 Privacy Policy</span>
+                    <span class="check-icon">→</span>
+                </button>
+            </div>
+            
+            <button class="consent-accept-btn" id="acceptConsentBtn" disabled>
+                Review Policies to Accept
+            </button>
+        </div>
+    </div>
+
+    <div class="signin-screen" id="signinScreen" style="display: none;">
+        <img src="/hushh-ico.png" alt="Hushh" class="signin-logo">
+        <h1 class="signin-title">Hushh</h1>
+        <p class="signin-subtitle">Stop swiping, start talking<br>90-second video dates</p>
+        <button class="google-signin-btn" id="googleSignInBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Sign in with Google
+        </button>
+    </div>
+
+    <div class="policy-modal" id="policyModal" style="display: none;">
+        <div class="policy-header">
+            <span class="policy-title" id="policyModalTitle">Policy Title</span>
+            <button class="policy-close-btn" id="policyCloseBtn">✕</button>
+        </div>
+        <div class="policy-content" id="policyContent">
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display: none;">
+        <div class="drawer-overlay" id="drawerOverlay"></div>
+        <nav class="nav-drawer" id="navDrawer">
+            <div class="drawer-header">
+                <div class="drawer-profile">
+                    <div class="drawer-profile-pic" id="drawerProfilePic">
+                        <img src="" alt="Profile">
+                        <div class="profile-badge" id="drawerVerificationBadge">✓</div> 
+                    </div>
+                    <div class="drawer-info">
+                        <h3 id="drawerName">User Name</h3>
+                        <p id="drawerEmail">email@example.com</p>
+                    </div>
+                </div>
+            </div>
+            <div class="drawer-menu">
+                <div class="drawer-item" id="updateProfileBtn">
+                    <span>⚙️</span>
+                    Update Profile
+                </div>
+                <div class="drawer-item" id="termsBtn">
+                    <span>📄</span>
+                    Terms of Service
+                </div>
+                <div class="drawer-item" id="privacyBtn">
+                    <span>🔒</span>
+                    Privacy Policy
+                </div>
+                <div class="drawer-item" id="logoutBtn">
+                    <span>🚪</span>
+                    Logout
+                </div>
+            </div>
+        </nav>
+
+        <header class="app-header">
+            <div class="header-left">
+                <button class="menu-btn" id="menuBtn">☰</button>
+                <img src="/hushh-ico.png" alt="Hushh" class="app-logo">
+                <h1 class="app-title">Hushh</h1>
+            </div>
+            <div class="profile-btn-wrapper">
+                <div class="profile-btn" id="headerProfileBtn">
+                    <img src="" alt="Profile" id="headerProfilePic">
+                </div>
+                <div class="profile-badge" id="headerVerificationBadge">✓</div> 
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="welcome-card">
+                <div class="welcome-icon">💖</div>
+                <h2 class="welcome-title">Ready to Date?</h2>
+                <p class="welcome-subtitle">Start your 90-second video date and meet someone new based on your interests</p>
+                <button class="start-date-btn" id="startDateBtn">Start Date 🎥</button>
+                <div class="user-count">
+                    <span class="live-dot"></span>
+                    <span id="userCountText">0 users online</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="profileModalOverlay"></div>
+    <div class="profile-modal" id="profileModal">
+        <div class="modal-header">
+            <div class="modal-drag-bar"></div>
+            <div class="modal-profile">
+                <div class="modal-profile-pic">
+                    <img src="" alt="Profile" id="modalProfilePic">
+                    <div class="profile-badge" id="modalVerificationBadge">✓</div>
+                </div>
+                <div class="modal-name" id="modalName">User Name</div>
+                <div class="modal-email" id="modalEmail">email@example.com</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/firebase-auth.js"></script>
+    <script>
+        let deferredPrompt;
+        let isPWA = false;
+        
+        // Check if already installed as PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            isPWA = true;
+            localStorage.setItem('hushh_installed', 'true');
+        }
+
+        // Check for mobile device
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // PWA Install logic
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        document.getElementById('installAppBtn')?.addEventListener('click', async () => {
+            const pwaInstallScreen = document.getElementById('pwa-install-screen');
+            const signinScreen = document.getElementById('signinScreen');
+            
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const result = await deferredPrompt.userPromptResult;
+                
+                if (result && result.outcome === 'accepted') {
+                    localStorage.setItem('hushh_installed', 'true');
+                } else if (result && result.outcome === 'dismissed') {
+                    localStorage.setItem('hushh_web_mode', 'true');
+                }
+                deferredPrompt = null;
+            } else {
+                localStorage.setItem('hushh_web_mode', 'true');
+            }
+            pwaInstallScreen.style.display = 'none';
+            signinScreen.style.display = 'flex';
+        });
+
+        document.getElementById('continueWebBtn')?.addEventListener('click', () => {
+            localStorage.setItem('hushh_web_mode', 'true');
+            document.getElementById('pwa-install-screen').style.display = 'none';
+            document.getElementById('signinScreen').style.display = 'flex';
+        });
+
+        // Navigation drawer
+        const navDrawer = document.getElementById('navDrawer');
+        const drawerOverlay = document.getElementById('drawerOverlay');
+
+        document.getElementById('menuBtn')?.addEventListener('click', () => {
+            navDrawer.classList.add('open');
+            drawerOverlay.classList.add('show');
+        });
+
+        drawerOverlay?.addEventListener('click', () => {
+            navDrawer.classList.remove('open');
+            drawerOverlay.classList.remove('show');
+        });
+
+        // --- Policy Content Setup ---
+        const termsContent = `
+            <h2>✅ TERMS OF USE – HUSHH</h2>
+            <p><strong>Last Updated: 2025-01-01</strong></p>
+            <h3>1. Acceptance of Terms</h3>
+            <p>By accessing or using Hushh ("Service"), you agree to these Terms of Use. If you do not agree, you must stop using the Service immediately.</p>
+            <h3>2. Eligibility (18+ Only)</h3>
+            <p>You must be 18 years or older to create an account or use the Service. We may request age verification anytime. We immediately terminate accounts belonging to minors.</p>
+            <h3>3. Nature of the Service</h3>
+            <p>Hushh provides 90-second real-time video chat connections, allowing adults to meet new people based on interest matching.</p>
+            <p>Hushh: Does NOT record or store any video or audio, Does NOT guarantee matches or outcomes, Is NOT responsible for user behaviour. You interact at your own risk.</p>
+            <h3>4. User Responsibilities</h3>
+            <p>You agree NOT to: Display nudity or sexual content, Harass, stalk, threaten, or abuse other users, Engage in hate speech or discrimination, Promote escorting, prostitution, or illegal services, Impersonate another person, Create fake or misleading profiles, Attempt to record, save, or leak video calls, Use bots or automated scripts, Attempt to hack, reverse-engineer, or manipulate the platform. We may suspend or permanently ban your account without warning.</p>
+            <h3>5. Community Safety</h3>
+            <p>Hushh may receive user reports. We may: Review accounts, Block/ban users, Share information with law enforcement (if legally required). We are not responsible for: User-to-user interactions, What users say or do, Any emotional, financial, or physical harm caused by others.</p>
+            <h3>6. Advertising & Monetization</h3>
+            <p>Hushh displays advertisements through approved third-party ad partners. We do not sell personal data to advertisers. You agree to see ads as part of the free Service.</p>
+            <h3>7. No Recording or Surveillance</h3>
+            <p>Hushh does not record video or audio. We process video streams in real time only to enable the call, after which the data is immediately discarded. Attempts to record calls using external apps is at the user's own risk.</p>
+            <h3>8. Account Termination</h3>
+            <p>We may suspend or terminate your account if: You violate these Terms, You create unsafe conditions, You are reported by other users, You are found to be under 18. Termination may occur without notice.</p>
+            <h3>9. Limitation of Liability</h3>
+            <p>To the maximum extent permitted by law: Hushh is provided "AS IS" with no guarantees. We are not liable for damages from interactions with other users. We are not liable for harassment, fraud, catfishing, or misuse. Your use of Hushh is at your own risk.</p>
+            <h3>10. Intermediary Status (India-Specific)</h3>
+            <p>For Indian users, Hushh operates as a "social media intermediary" under the Information Technology Act, 2000. We provide a platform but are not responsible for user-generated content.</p>
+            <h3>11. Governing Law</h3>
+            <p>Indian users: governed by the laws of India (Kerala jurisdiction). Global users: governed by local applicable laws.</p>
+            <h3>12. Contact</h3>
+            <p>support@hushh.online</p>
+        `;
+
+        const privacyContent = `
+            <h2>🔒 PRIVACY POLICY – HUSHH</h2>
+            <p><strong>Last Updated: 2025-01-01</strong></p>
+            <h3>1. Introduction</h3>
+            <p>This Privacy Policy explains how Hushh ("we", "our", "us") collects, uses, and protects your information. Your privacy is our priority.</p>
+            <h3>2. Information We Collect</h3>
+            <h4>A. Information You Provide</h4>
+            <ul>
+                <li>Name</li>
+                <li>Email</li>
+                <li>Age (must be 18+)</li>
+                <li>Gender</li>
+                <li>Dating preferences</li>
+                <li>Interests</li>
+                <li>Profile photo</li>
+            </ul>
+            <h4>B. Information Collected Automatically</h4>
+            <ul>
+                <li>Device type, OS, browser</li>
+                <li>IP address</li>
+                <li>Time zone</li>
+                <li>Connection logs</li>
+                <li>Match preferences</li>
+                <li>Interaction analytics (anonymous)</li>
+            </ul>
+            <h4>C. Video/Audio Data</h4>
+            <p>We DO NOT RECORD OR STORE: Video streams, Audio streams. They are processed only live, never saved.</p>
+            <h3>3. How We Use Your Information</h3>
+            <p>We use your information to: Create and manage your account, Match you with other users, Enable 90-second video calls, Detect policy violations, Improve app performance, Show personalized or general ads, Prevent fraud or misuse. We never sell your data.</p>
+            <h3>4. How We Share Your Information</h3>
+            <h4>Service Providers</h4>
+            <p>We may share limited information with: Firebase (authentication & database), Socket.io (real-time matching), Cloud hosting providers, Ad networks (Adsterra, Google Ads, etc.)</p>
+            <h4>Legal/Compliance</h4>
+            <p>We may disclose data if: Required by law, Necessary to protect users, Necessary to prevent fraud or harm. We never share video or audio data because we do not store it.</p>
+            <h3>5. Cookies & Tracking</h3>
+            <p>We use: Essential cookies, Analytics cookies, Advertising cookies. Users can disable cookies in their browser, but some features may not work.</p>
+            <h3>6. Data Retention</h3>
+            <ul>
+                <li>Profile data: kept until you delete your account</li>
+                <li>Logs: stored for security (up to 90 days)</li>
+                <li>Video/audio: never stored</li>
+            </ul>
+            <h3>7. Your Rights</h3>
+            <p>Depending on your region, you may: Request account deletion, Request a copy of your data, Update your information, Withdraw consent for location. Email support@hushh.online to exercise rights.</p>
+            <h3>8. Children's Privacy</h3>
+            <p>Hushh is strictly 18+. If a minor is found, we immediately delete their profile and block access.</p>
+            <h3>9. Data Security</h3>
+            <p>We use: HTTPS encryption, Firebase security rules, Authentication protection, Real-time monitoring. No system is 100% secure, but we implement industry best practices.</p>
+            <h3>10. International Transfers</h3>
+            <p>Your data may be processed in regions where our servers or partners operate. All transfers follow applicable international data protection laws.</p>
+            <h3>11. Changes to This Policy</h3>
+            <p>We may update this Privacy Policy from time to time. Changes are effective when posted.</p>
+            <h3>12. Contact Us</h3>
+            <p>For questions or complaints: 📩 support@hushh.online</p>
+        `;
+        // --- End Policy Content Setup ---
+
+
+        // Policy Modal Logic (For drawer clicks AND consent screen)
+        const policyModal = document.getElementById('policyModal');
+        const policyModalTitle = document.getElementById('policyModalTitle');
+        const policyContent = document.getElementById('policyContent');
+        const policyCloseBtn = document.getElementById('policyCloseBtn');
+        
+        // Track where the policy was opened from
+        let policyOpenedFrom = null; // Can be: 'drawer', 'consent', null
+
+        function showPolicy(title, content, source) {
+            policyOpenedFrom = source || null;
+            policyModalTitle.textContent = title;
+            policyContent.innerHTML = content;
+            policyModal.classList.add('show');
+            policyModal.style.display = 'flex';
+            policyContent.scrollTop = 0;
+
+            // Hide the screens behind the policy viewer
+            document.getElementById('signinScreen').style.display = 'none';
+            document.getElementById('consentModal').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('pwa-install-screen').style.display = 'none';
+            navDrawer.classList.remove('open');
+            drawerOverlay.classList.remove('show');
+        }
+
+        function closePolicy() {
+            policyModal.classList.remove('show');
+            policyModal.style.display = 'none';
+
+            const hasConsent = localStorage.getItem('hushh_consent_accepted');
+            const user = firebase.auth().currentUser;
+            const hasSeenInstall = localStorage.getItem('hushh_installed') || localStorage.getItem('hushh_web_mode');
+
+            if (policyOpenedFrom === 'drawer') {
+                // Opened from drawer -> Return to app container
+                document.getElementById('appContainer').style.display = 'flex';
+                policyOpenedFrom = null;
+            } else if (policyOpenedFrom === 'consent') {
+                // Opened from consent modal -> Return to consent modal
+                document.getElementById('consentModal').style.display = 'flex';
+                checkConsentStatus();
+                policyOpenedFrom = null;
+            } else {
+                // Fallback logic (shouldn't normally reach here)
+                if (user) {
+                    document.getElementById('appContainer').style.display = 'flex';
+                } else if (!hasSeenInstall && isMobile && !isPWA) {
+                    document.getElementById('pwa-install-screen').style.display = 'flex';
+                } else if (hasConsent !== 'true') {
+                    document.getElementById('consentModal').style.display = 'flex';
+                    checkConsentStatus();
+                } else {
+                    document.getElementById('signinScreen').style.display = 'flex';
+                }
+            }
+        }
+        
+        // Centralized close logic for the policy viewer modal
+        policyCloseBtn?.addEventListener('click', closePolicy);
+
+        // Terms Button Click (Drawer - Logged in view)
+        document.getElementById('termsBtn')?.addEventListener('click', () => {
+            showPolicy("Terms of Use", termsContent, 'drawer');
+        });
+
+        // Privacy Button Click (Drawer - Logged in view)
+        document.getElementById('privacyBtn')?.addEventListener('click', () => {
+            showPolicy("Privacy Policy", privacyContent, 'drawer');
+        });
+        
+        // --- Consent Modal Logic (New) ---
+        const consentModal = document.getElementById('consentModal');
+        const consentTermsBtn = document.getElementById('consentTermsBtn');
+        const consentPrivacyBtn = document.getElementById('consentPrivacyBtn');
+        const acceptConsentBtn = document.getElementById('acceptConsentBtn');
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+        
+        let policiesViewed = { terms: false, privacy: false };
+
+        function checkConsentStatus() {
+            if (policiesViewed.terms && policiesViewed.privacy) {
+                acceptConsentBtn.disabled = false;
+                acceptConsentBtn.textContent = "I Agree & Continue to Profile Setup";
+            } else {
+                acceptConsentBtn.disabled = true;
+                acceptConsentBtn.textContent = "Review Policies to Accept";
+            }
+        }
+
+        // Policy View Handler for CONSENT SCREEN 
+        consentTermsBtn?.addEventListener('click', () => {
+            showPolicy("Terms of Use", termsContent, 'consent');
+            policiesViewed.terms = true;
+            consentTermsBtn.classList.add('viewed');
+            consentTermsBtn.querySelector('.check-icon').textContent = '✔';
+            checkConsentStatus(); 
+        });
+
+        consentPrivacyBtn?.addEventListener('click', () => {
+            showPolicy("Privacy Policy", privacyContent, 'consent');
+            policiesViewed.privacy = true;
+            consentPrivacyBtn.classList.add('viewed');
+            consentPrivacyBtn.querySelector('.check-icon').textContent = '✔';
+            checkConsentStatus();
+        });
+        
+        acceptConsentBtn?.addEventListener('click', () => {
+            if (!acceptConsentBtn.disabled) {
+                // 1. Save consent in localStorage
+                localStorage.setItem('hushh_consent_accepted', 'true');
+                
+                // 2. Hide consent modal
+                consentModal.style.display = 'none';
+                
+                // 3. Complete the pending Google Sign-In and handle redirection to setup
+                signInWithGoogle();
+            }
+        });
+        
+        // New Google Sign-In Logic (Pauses sign-in for consent)
+        googleSignInBtn?.addEventListener('click', () => {
+            const hasConsent = localStorage.getItem('hushh_consent_accepted');
+            
+            if (hasConsent === 'true') {
+                // If consent exists, proceed to Firebase auth
+                signInWithGoogle();
+            } else {
+                // If consent is missing, hide sign-in screen and show consent modal
+                document.getElementById('signinScreen').style.display = 'none';
+                consentModal.style.display = 'flex';
+                
+                // Reset/setup policies viewed status for a fresh session
+                policiesViewed = { terms: false, privacy: false };
+                consentTermsBtn.classList.remove('viewed');
+                consentPrivacyBtn.classList.remove('viewed');
+                consentTermsBtn.querySelector('.check-icon').textContent = '→';
+                consentPrivacyBtn.querySelector('.check-icon').textContent = '→';
+                checkConsentStatus(); 
+            }
+        });
+
+
+        // Profile modal
+        document.getElementById('headerProfileBtn')?.addEventListener('click', () => {
+            document.getElementById('profileModal').classList.add('show');
+            document.getElementById('profileModalOverlay').classList.add('show');
+        });
+
+        document.getElementById('profileModalOverlay')?.addEventListener('click', () => {
+            document.getElementById('profileModal').classList.remove('show');
+            document.getElementById('profileModalOverlay').classList.remove('show');
+        });
+
+        // Start date button
+        document.getElementById('startDateBtn')?.addEventListener('click', () => {
+            window.location.href = '/video-chat';
+        });
+
+        // Drawer menu items
+        document.getElementById('updateProfileBtn')?.addEventListener('click', () => {
+            window.location.href = '/profile-setup';
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            firebase.auth().signOut();
+        });
+
+        // Socket.io for user count
+        const socket = io();
+        socket.on('updateUserCount', (count) => {
+            document.getElementById('userCountText').textContent = `${count} users online`;
+        });
+
+        // Auth state handler
+        firebaseAuth.onAuthStateChanged(async (user) => {
+            const currentPath = window.location.pathname;
+            
+            if (currentPath !== '/' && currentPath !== '/index.html') {
+                return;
+            }
+            
+            document.getElementById('loadingScreen').style.display = 'none';
+            const hasConsent = localStorage.getItem('hushh_consent_accepted');
+            
+            if (user) {
+                // User is authenticated
+                document.getElementById('pwa-install-screen').style.display = 'none';
+                document.getElementById('signinScreen').style.display = 'none';
+                document.getElementById('consentModal').style.display = 'none';
+
+                const profile = await getUserProfile(user.uid);
+                
+                // Update UI with user data
+                const photoURL = user.photoURL || '/hushh-ico.png';
+                document.getElementById('headerProfilePic').src = photoURL;
+                document.getElementById('drawerProfilePic').querySelector('img').src = photoURL;
+                document.getElementById('modalProfilePic').src = photoURL;
+                document.getElementById('drawerName').textContent = user.displayName || 'User';
+                document.getElementById('drawerEmail').textContent = user.email || '';
+                document.getElementById('modalName').textContent = user.displayName || 'User';
+                document.getElementById('modalEmail').textContent = user.email || '';
+
+                // NEW: Handle Verification Badge Display
+                const headerBadge = document.getElementById('headerVerificationBadge');
+                const drawerBadge = document.getElementById('drawerVerificationBadge');
+                const modalBadge = document.getElementById('modalVerificationBadge');
+                
+                if (profile && profile.photo_verified) {
+                    headerBadge.style.display = 'flex';
+                    drawerBadge.style.display = 'flex';
+                    modalBadge.style.display = 'flex';
+                } else {
+                    headerBadge.style.display = 'none';
+                    drawerBadge.style.display = 'none';
+                    modalBadge.style.display = 'none';
+                }
+
+                if (profile) {
+                    // Profile complete -> show app
+                    document.getElementById('appContainer').style.display = 'flex';
+                } else {
+                    // Profile incomplete -> redirect to setup
+                    window.location.href = '/profile-setup';
+                }
+            } else {
+                // Not authenticated
+                const hasSeenInstall = localStorage.getItem('hushh_installed') || localStorage.getItem('hushh_web_mode');
+                
+                // Determine which landing screen to show
+                if (!hasSeenInstall && isMobile && !isPWA) {
+                    // 1. PWA Install Screen
+                    document.getElementById('pwa-install-screen').style.display = 'flex';
+                    document.getElementById('signinScreen').style.display = 'none';
+                } else {
+                    // 2. Sign-in Screen (Consent is handled on button click)
+                    document.getElementById('pwa-install-screen').style.display = 'none';
+                    document.getElementById('signinScreen').style.display = 'flex';
+                }
+                
+                document.getElementById('appContainer').style.display = 'none';
+                document.getElementById('consentModal').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
