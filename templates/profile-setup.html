@@ -38,10 +38,10 @@
             text-align: center;
             margin-bottom: 30px;
             padding-top: 20px;
-            position: relative; /* Added to position the close button relative to the header area */
+            position: relative; 
         }
         
-        /* NEW: Close Button Styles */
+        /* Close Button Styles */
         .close-btn {
             position: absolute;
             top: 20px; 
@@ -656,6 +656,8 @@
                 takePhotoBtn.style.display = 'block';
                 takePhotoBtn.textContent = 'Take Photo';
                 verificationHeader.textContent = '📸 Strike a Pose!';
+                verifiedStatus.style.display = 'none'; // Hide Verified message when starting capture
+                photoVerificationData = null; // Clear old data
 
             } catch (err) {
                 console.error("Error accessing camera: ", err);
@@ -715,12 +717,13 @@
         
         takePhotoBtn.addEventListener('click', () => {
             if (photoVerificationData) {
-                // If photoVerificationData exists, retake means restart camera
+                // If photoVerificationData exists, Retake means discard current photo and restart camera
                 photoVerificationData = null; 
                 captureCanvas.style.display = 'none';
+                verifiedStatus.style.display = 'none'; // Ensure verified status hides if retaking
                 startCamera(); 
             } else {
-                // If no photo data, take a new photo
+                // If no photo data, this button acts as 'Take Photo'
                 takePhoto();
             }
         });
@@ -784,15 +787,19 @@
                                 renderInterests();
                             }
                             
-                            // NEW: Check verification status and display saved photo
+                            // ------------------------------------------------------------------
+                            // CRITICAL UPDATE: Only show Retake button IF profile is NOT verified 
+                            // OR a new photo has just been taken (handled by separate logic below).
+                            // ------------------------------------------------------------------
                             if (profile.photo_verified) {
                                 verifiedStatus.style.display = 'block';
                                 verificationHeader.textContent = '✅ Profile Verified';
                                 startCaptureBtn.style.display = 'none';
-                                takePhotoBtn.style.display = 'block';
-                                takePhotoBtn.textContent = 'Retake Photo';
                                 
-                                // HIDE cameraMessage when displaying saved verified state
+                                // Reset takePhotoBtn state to "Retake Photo" and ensure visibility
+                                takePhotoBtn.textContent = 'Retake Photo';
+                                takePhotoBtn.style.display = 'block'; 
+                                
                                 cameraMessage.textContent = ''; 
                                 cameraMessage.style.display = 'none'; 
                                 
@@ -801,39 +808,36 @@
                                     const context = captureCanvas.getContext('2d');
                                     const img = new Image();
                                     
-                                    // Necessary for cross-origin images (e.g., ngrok -> local server)
                                     img.crossOrigin = "anonymous"; 
                                     
                                     img.onload = () => {
-                                        // Use the container's size to ensure the image covers the viewport area
                                         const viewport = document.querySelector('.camera-viewport');
                                         const containerWidth = viewport.offsetWidth;
                                         const containerHeight = viewport.offsetHeight;
                                         
-                                        // Calculate the maximum possible size while maintaining aspect ratio (Cover effect)
                                         const ratio = Math.max(containerWidth / img.naturalWidth, containerHeight / img.naturalHeight);
                                         const newWidth = img.naturalWidth * ratio;
                                         const newHeight = img.naturalHeight * ratio;
 
-                                        // Set the canvas drawing dimensions to the container size
                                         captureCanvas.width = containerWidth;
                                         captureCanvas.height = containerHeight;
                                         
-                                        // Calculate offset to center the image for a 'cover' effect
                                         const offsetX = (containerWidth - newWidth) / 2;
                                         const offsetY = (containerHeight - newHeight) / 2;
 
-                                        // Draw the image scaled and centered
                                         context.drawImage(img, offsetX, offsetY, newWidth, newHeight); 
                                         
-                                        // Display the canvas
                                         captureCanvas.style.display = 'block';
                                         cameraVideo.style.display = 'none';
                                     };
-                                    // Use the URL saved by the Flask server
                                     img.src = profile.verificationPhotoURL; 
                                 }
+                            } else {
+                                // Profile NOT verified, show only the initial button
+                                startCaptureBtn.style.display = 'block';
+                                takePhotoBtn.style.display = 'none'; 
                             }
+                            // ------------------------------------------------------------------
                         }
                     });
                 } else {
